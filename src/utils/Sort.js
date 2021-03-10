@@ -55,6 +55,22 @@ const ALL_CMCS = Array.from(Array(33).keys())
   .map((x) => (x / 2).toString())
   .concat(['1000000']);
 
+const CARD_TYPES = [
+  'Creature',
+  'Planeswalker',
+  'Instant',
+  'Sorcery',
+  'Artifact',
+  'Enchantment',
+  'Conspiracy',
+  'Contraption',
+  'Phenomenon',
+  'Plane',
+  'Scheme',
+  'Vanguard',
+  'Land',
+];
+
 const SINGLE_COLOR = ['White', 'Blue', 'Black', 'Red', 'Green'];
 const GUILDS = ['Azorius', 'Dimir', 'Rakdos', 'Gruul', 'Selesnya', 'Orzhov', 'Izzet', 'Golgari', 'Boros', 'Simic'];
 const SHARDS_AND_WEDGES = ['Bant', 'Esper', 'Grixis', 'Jund', 'Naya', 'Mardu', 'Temur', 'Abzan', 'Jeskai', 'Sultai'];
@@ -159,6 +175,7 @@ export const SORTS = [
   'Toughness',
   'Type',
   'Types-Multicolor',
+  'Types/Multicolor/Land Packages',
   'Devotion to White',
   'Devotion to Blue',
   'Devotion to Black',
@@ -378,6 +395,14 @@ function getLabelsRaw(cube, sort) {
       'Land',
       'Other',
     ];
+  }
+  if (sort === 'Types/Multicolor/Land Packages') {
+    return CARD_TYPES.slice(0, -1)
+      .concat(GUILDS)
+      .concat(SHARDS_AND_WEDGES)
+      .concat(FOUR_AND_FIVE_COLOR)
+      .concat(['Land'])
+      .concat(['Other']);
   }
   if (sort === 'Legality') {
     return ['Standard', 'Modern', 'Legacy', 'Vintage', 'Pioneer', 'Brawl', 'Historic', 'Pauper', 'Penny', 'Commander'];
@@ -624,6 +649,42 @@ export function cardGetLabels(card, sort) {
     return [];
   }
   if (sort === 'Types-Multicolor') {
+    if (cardColorIdentity(card).length <= 1) {
+      const split = cardType(card).split('—');
+      const types = split[0].trim().split(' ');
+      const type = types[types.length - 1];
+      // check last type
+      if (
+        ![
+          'Creature',
+          'Planeswalker',
+          'Instant',
+          'Sorcery',
+          'Artifact',
+          'Enchantment',
+          'Conspiracy',
+          'Contraption',
+          'Phenomenon',
+          'Plane',
+          'Scheme',
+          'Vanguard',
+          'Land',
+        ].includes(type)
+      ) {
+        return ['Other'];
+      }
+      return [type];
+    }
+    if (cardColorIdentity(card).length === 5) {
+      return ['Five Color'];
+    }
+    return [
+      ...cardGetLabels(card, 'Guilds'),
+      ...cardGetLabels(card, 'Shards / Wedges'),
+      ...cardGetLabels(card, '4+ Color'),
+    ];
+  }
+  if (sort === 'Types/Multicolor/Land Packages') {
     if (cardColorIdentity(card).length <= 1) {
       const split = cardType(card).split('—');
       const types = split[0].trim().split(' ');
